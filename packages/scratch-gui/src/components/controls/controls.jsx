@@ -1,7 +1,7 @@
 import classNames from 'classnames';
 import PropTypes from 'prop-types';
 import React from 'react';
-import {defineMessages, injectIntl, intlShape} from 'react-intl';
+import { defineMessages, injectIntl, intlShape } from 'react-intl';
 
 import GreenFlag from '../green-flag/green-flag.jsx';
 import StopAll from '../stop-all/stop-all.jsx';
@@ -52,11 +52,11 @@ const Controls = function (props) {
                 title={intl.formatMessage(messages.stopTitle)}
                 onClick={onStopAllClick}
             />
-            <Record
+            {/* <Record
                 active={recording}
                 title={intl.formatMessage(messages.stopTitle)}
                 onClick={onRecordClick}
-            />
+            /> */}
             {turbo ? (
                 <TurboMode />
             ) : null}

@@ -258,7 +258,7 @@ const GUIComponent = props => {
                                             id="gui.gui.codeTab"
                                         />
                                     </Tab>
-                                    <Tab
+                                    {/* <Tab
                                         className={tabClassNames.tab}
                                         onClick={onActivateCostumesTab}
                                     >
@@ -293,7 +293,7 @@ const GUIComponent = props => {
                                             description="Button to get to the sounds panel"
                                             id="gui.gui.soundsTab"
                                         />
-                                    </Tab>
+                                    </Tab> */}
                                 </TabList>
                                 <TabPanel className={tabClassNames.tabPanel}>
                                     <Box className={styles.blocksWrapper}>
@@ -325,16 +325,16 @@ const GUIComponent = props => {
                                         <Watermark />
                                     </Box>
                                 </TabPanel>
-                                <TabPanel className={tabClassNames.tabPanel}>
+                                {/* <TabPanel className={tabClassNames.tabPanel}>
                                     {costumesTabVisible ? <CostumeTab vm={vm} /> : null}
                                 </TabPanel>
                                 <TabPanel className={tabClassNames.tabPanel}>
                                     {soundsTabVisible ? <SoundTab vm={vm} /> : null}
-                                </TabPanel>
+                                </TabPanel> */}
                             </Tabs>
-                            {backpackVisible ? (
+                            {/* {backpackVisible ? (
                                 <Backpack host={backpackHost} />
-                            ) : null}
+                            ) : null} */}
                         </Box>
 
                         <Box className={classNames(styles.stageAndTargetWrapper, styles[stageSize])}>
@@ -344,12 +344,12 @@ const GUIComponent = props => {
                                 stageSize={stageSize}
                                 vm={vm}
                             />
-                            <Box className={styles.targetWrapper}>
+                            {/* <Box className={styles.targetWrapper}>
                                 <TargetPane
                                     stageSize={stageSize}
                                     vm={vm}
                                 />
-                            </Box>
+                            </Box> */}
                         </Box>
                     </Box>
                 </Box>

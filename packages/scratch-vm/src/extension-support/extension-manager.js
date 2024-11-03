@@ -33,6 +33,7 @@ const builtinExtensions = {
     arduinoRobot: () => require('../extensions/scratch3_arduinobot'),
     gizmoRobot: () => require('../extensions/scratch3_gizmo'),
     microbitRobot: () => require('../extensions/scratch3_microbot'),
+    tpBot: () => require('../extensions/scratch3_tpbot'),
 };
 
 /**

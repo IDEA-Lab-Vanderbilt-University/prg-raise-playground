@@ -141,11 +141,11 @@ const motion = function (isStage, targetId) {
 const xmlEscape = function (unsafe) {
     return unsafe.replace(/[<>&'"]/g, c => {
         switch (c) {
-        case '<': return '&lt;';
-        case '>': return '&gt;';
-        case '&': return '&amp;';
-        case '\'': return '&apos;';
-        case '"': return '&quot;';
+            case '<': return '&lt;';
+            case '>': return '&gt;';
+            case '&': return '&amp;';
+            case '\'': return '&apos;';
+            case '"': return '&quot;';
         }
     });
 };
@@ -753,22 +753,23 @@ const makeToolboxXML = function (isStage, targetId, categoriesXML = [],
     const variablesXML = moveCategory('data') || variables(isStage, targetId);
     const myBlocksXML = moveCategory('procedures') || myBlocks(isStage, targetId);
 
-    const everything = [
-        xmlOpen,
-        motionXML, gap,
-        looksXML, gap,
-        soundXML, gap,
+    const everything = [xmlOpen];
+
+    for (const extensionCategory of categoriesXML) {
+        everything.push(gap, extensionCategory.xml);
+    }
+
+    everything.push(
+        // motionXML, gap,
+        // looksXML, gap,
+        // soundXML, gap,
         eventsXML, gap,
         controlXML, gap,
         sensingXML, gap,
         operatorsXML, gap,
         variablesXML, gap,
         myBlocksXML
-    ];
-
-    for (const extensionCategory of categoriesXML) {
-        everything.push(gap, extensionCategory.xml);
-    }
+    );
 
     everything.push(xmlClose);
     return everything.join('\n');

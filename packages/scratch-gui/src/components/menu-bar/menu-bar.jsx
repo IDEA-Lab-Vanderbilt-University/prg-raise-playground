@@ -72,7 +72,7 @@ import remixIcon from './icon--remix.svg';
 import dropdownCaret from './dropdown-caret.svg';
 import languageIcon from '../language-selector/language-icon.svg';
 
-import scratchLogo from './raise-white.png';
+import scratchLogo from './SPOT-logo.svg';
 
 import sharedMessages from '../../lib/shared-messages';
 

@@ -71,6 +71,8 @@ export default class teachableMachine extends extension({
       // Configure the video device with values from globally stored locations.
       // this.runtime.on(Runtime.PROJECT_LOADED, this.updateVideoDisplay.bind(this));
 
+      // this.runtime.ioDevices.video.enableVideo();
+
       // Kick off looping the analysis logic.
       this._loop();
     }
