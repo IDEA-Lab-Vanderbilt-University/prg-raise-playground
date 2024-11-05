@@ -2,9 +2,9 @@ import { Environment, buttonBlock, extension } from "$common";
 import tmImage from '@teachablemachine/image';
 import tmPose from '@teachablemachine/pose';
 import { create } from '@tensorflow-models/speech-commands';
-import { legacyFullSupport, } from "./legacy";
+import { legacyFullSupport, legacyIncrementalSupport, } from "./legacy";
 
-const { legacyBlock, legacyExtension } = legacyFullSupport.for<teachableMachine>();
+const { legacyBlock, legacyExtension } = legacyIncrementalSupport.for<teachableMachine>();
 const VideoState = {
   /** Video turned off. */
   OFF: 'off',
@@ -20,8 +20,8 @@ const dynamicClassMenu = (self: teachableMachine) => ({
 
 @legacyExtension()
 export default class teachableMachine extends extension({
-  name: "Teachable Machine",
-  description: "Use your Teachable Machine models in your Scratch project!",
+  name: "Traininator",
+  description: "Use your Machine Learning models in your Scratch project!",
   iconURL: "teachable-machine-blocks.png",
   insetIconURL: "teachable-machine-blocks-small.svg",
   tags: ["Dancing with AI", "Made by PRG"]
@@ -331,15 +331,16 @@ export default class teachableMachine extends extension({
     window.open('https://teachablemachine.withgoogle.com/train', '_blank');
   }
 
+  // TODO: make this a dropdown block
   @legacyBlock.useModelBlock()
   useModelBlock(url: string) {
     this.useModel(url);
   }
 
-  @legacyBlock.whenModelMatches(dynamicClassMenu)
-  whenModelMatches(state: string) {
-    return this.model_match(state);
-  }
+  // @legacyBlock.whenModelMatches(dynamicClassMenu)
+  // whenModelMatches(state: string) {
+  //   return this.model_match(state);
+  // }
 
   @legacyBlock.modelPrediction()
   modelPrediction() {
@@ -351,10 +352,10 @@ export default class teachableMachine extends extension({
     return this.model_match(state);
   }
 
-  @legacyBlock.classConfidence(dynamicClassMenu)
-  classConfidence(state: string) {
-    return this.getClassConfidence(state);
-  }
+  // @legacyBlock.classConfidence(dynamicClassMenu)
+  // classConfidence(state: string) {
+  //   return this.getClassConfidence(state);
+  // }
 
   @legacyBlock.videoToggle({
     argumentMethods: {
@@ -369,9 +370,9 @@ export default class teachableMachine extends extension({
     this.toggleVideo(state);
   }
 
-  @legacyBlock.setVideoTransparency()
-  setVideoTransparency(transparency: number) {
-    this.setTransparency(transparency);
-  }
+  // @legacyBlock.setVideoTransparency()
+  // setVideoTransparency(transparency: number) {
+  //   this.setTransparency(transparency);
+  // }
 
 }

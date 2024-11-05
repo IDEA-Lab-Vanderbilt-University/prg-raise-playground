@@ -308,7 +308,7 @@ const GUIComponent = props => {
                                             vm={vm}
                                         />
                                     </Box>
-                                    <Box className={styles.extensionButtonContainer}>
+                                    {/* <Box className={styles.extensionButtonContainer}>
                                         <button
                                             className={styles.extensionButton}
                                             title={intl.formatMessage(messages.addExtension)}
@@ -320,7 +320,7 @@ const GUIComponent = props => {
                                                 src={addExtensionIcon}
                                             />
                                         </button>
-                                    </Box>
+                                    </Box> */}
                                     <Box className={styles.watermark}>
                                         <Watermark />
                                     </Box>

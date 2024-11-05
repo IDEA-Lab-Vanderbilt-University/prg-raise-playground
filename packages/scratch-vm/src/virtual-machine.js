@@ -31,16 +31,16 @@ const RESERVED_NAMES = ['_mouse_', '_stage_', '_edge_', '_myself_', '_random_'];
 const CORE_EXTENSIONS = [
     'tpBot',
     'teachableMachine',
-    'textClassification',
-    'motion',
-    'looks',
-    'sound',
-    'events',
-    'control',
-    'sensing',
-    'operators',
-    'variables',
-    'myBlocks'
+    // 'textClassification',
+    // 'motion',
+    // 'looks',
+    // 'sound',
+    // 'events',
+    // 'control',
+    // 'sensing',
+    // 'operators',
+    // 'variables',
+    // 'myBlocks'
 ];
 
 class ScratchCanvasRecorder {

@@ -348,11 +348,6 @@ const events = function (isStage) {
         <block type="event_whenflagclicked"/>
         <block type="event_whenkeypressed">
         </block>
-        ${isStage ? `
-            <block type="event_whenstageclicked"/>
-        ` : `
-            <block type="event_whenthisspriteclicked"/>
-        `}
         <block type="event_whenbackdropswitchesto">
         </block>
         ${blockSeparator}
@@ -485,17 +480,8 @@ const sensing = function (isStage) {
         ${blockSeparator}
         <block id="timer" type="sensing_timer"/>
         <block type="sensing_resettimer"/>
-        ${blockSeparator}
-        <block id="of" type="sensing_of">
-            <value name="OBJECT">
-                <shadow id="sensing_of_object_menu" type="sensing_of_object_menu"/>
-            </value>
-        </block>
-        ${blockSeparator}
         <block id="current" type="sensing_current"/>
         <block type="sensing_dayssince2000"/>
-        ${blockSeparator}
-        <block type="sensing_username"/>
         ${categorySeparator}
     </category>
     `;

@@ -79,7 +79,7 @@ class TPBot {
             id: EXTENSION_ID,
             name: formatMessage({
                 id: 'tpBot',
-                default: 'TP Bot',
+                default: 'Robot',
                 description: 'Extension using BLE to communicate with Microbit robot. Use hex file in https://sites.google.com/view/httyr-setup'
             }),
             showStatusButton: true,
