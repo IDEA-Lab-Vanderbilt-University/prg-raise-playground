@@ -11,7 +11,8 @@ export const info = {
         "MODEL_URL": {
           "type": "string",
           // "defaultValue": "https://teachablemachine.withgoogle.com/models/knrpLxv8N/"
-          "defaultValue": "Paste URL here!"
+          "defaultValue": "Select your model",
+          "menu": "MODEL_URL"
         }
       },
       "blockType": "command"
@@ -88,6 +89,7 @@ export const info = {
   ],
   "menus": {
     "CLASS_NAME": "getCurrentClasses",
+    "MODEL_URL": "getUserModels",
     "ATTRIBUTE": {
       "acceptReporters": true,
       "items": [

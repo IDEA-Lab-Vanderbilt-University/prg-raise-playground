@@ -18,6 +18,10 @@ const dynamicClassMenu = (self: teachableMachine) => ({
   argumentMethods: { 0: { getItems: () => self.getClasses() } }
 })
 
+const dynamicModelMenu = (self: teachableMachine) => ({
+  argumentMethods: { 0: { getItems: () => self.getModels() } }
+})
+
 @legacyExtension()
 export default class teachableMachine extends extension({
   name: "Traininator",
@@ -285,6 +289,10 @@ export default class teachableMachine extends extension({
     return this.predictionState[this.teachableImageModel].model.getClassLabels();
   }
 
+  getModels() {
+    return ["dummy-model.one/", "dummy-model.two/"];
+  }
+
   model_match(state) {
     const modelUrl = this.teachableImageModel;
     const className = state;
@@ -332,7 +340,7 @@ export default class teachableMachine extends extension({
   }
 
   // TODO: make this a dropdown block
-  @legacyBlock.useModelBlock()
+  @legacyBlock.useModelBlock(dynamicModelMenu)
   useModelBlock(url: string) {
     this.useModel(url);
   }
