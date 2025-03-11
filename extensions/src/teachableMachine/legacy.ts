@@ -89,7 +89,10 @@ export const info = {
   ],
   "menus": {
     "CLASS_NAME": "getCurrentClasses",
-    "MODEL_URL": "getUserModels",
+    "MODEL_URL": {
+      "acceptReporters": false,
+      "items": "getUserModels"
+    },
     "ATTRIBUTE": {
       "acceptReporters": true,
       "items": [

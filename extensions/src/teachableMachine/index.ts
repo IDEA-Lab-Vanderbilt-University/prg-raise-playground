@@ -19,7 +19,12 @@ const dynamicClassMenu = (self: teachableMachine) => ({
 })
 
 const dynamicModelMenu = (self: teachableMachine) => ({
-  argumentMethods: { 0: { getItems: () => self.getModels() } }
+  argumentMethods: {
+    0: {
+      // handler: (reported: unknown) => String(reported),
+      getItems: () => self.getModels(),
+    }
+  }
 })
 
 @legacyExtension()
@@ -206,7 +211,7 @@ export default class teachableMachine extends extension({
     return predictionState.topClass;
   }
 
-  async initModel(modelUrl) {
+  async initModel(modelUrl: string) {
     const avoidCache = `?x=${Date.now()}`;
     const modelURL = modelUrl + "model.json" + avoidCache;
     const metadataURL = modelUrl + "metadata.json" + avoidCache;
@@ -235,7 +240,7 @@ export default class teachableMachine extends extension({
     }
   }
 
-  useModel(url) {
+  useModel(url: string) {
     try {
       const modelUrl = this.modelArgumentToURL(url);
       this.getPredictionStateOrStartPredicting(modelUrl, true);
@@ -290,7 +295,10 @@ export default class teachableMachine extends extension({
   }
 
   getModels() {
-    return ["dummy-model.one/", "dummy-model.two/"];
+    return [
+      { "text": "dummy-1", "value": "dummy-model.one/" },
+      { "text": "dummy-2", "value": "dummy-model.two/" }
+    ];
   }
 
   model_match(state) {
