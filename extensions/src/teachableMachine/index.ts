@@ -14,6 +14,8 @@ const VideoState = {
   ON_FLIPPED: 'on-flipped',
 } as const;
 
+const ModelsEndpoint = 'http://localhost:8080/traininator-models';
+
 const dynamicClassMenu = (self: teachableMachine) => ({
   argumentMethods: { 0: { getItems: () => self.getClasses() } }
 })
@@ -36,6 +38,7 @@ export default class teachableMachine extends extension({
   tags: ["Dancing with AI", "Made by PRG"]
 }, "indicators") {
   lastUpdate: number;
+  modelsList: { text: string, value: string }[];
   maxConfidence: number;
   modelConfidences: {};
   isPredicting: number;
@@ -62,7 +65,7 @@ export default class teachableMachine extends extension({
     AUDIO: 'audio',
   };
 
-  init(env: Environment) {
+  async init(env: Environment) {
 
     /**
      * The last millisecond epoch timestamp that the video stream was
@@ -75,6 +78,16 @@ export default class teachableMachine extends extension({
     // What is the confidence of the latest prediction
     this.maxConfidence = null;
     this.modelConfidences = {};
+
+    // get list of models
+    const urlParams = new URLSearchParams(window.location.search);
+    const studentId = urlParams.get('student_id');
+    try {
+      const res = await (await fetch(`${ModelsEndpoint}?student_id=${studentId}`)).json();
+      this.modelsList = res.map(m => ({ text: m.name, value: `${ModelsEndpoint}/${m.id}/` }))
+    } catch (e) {
+      console.log(e);
+    }
 
     if (this.runtime.ioDevices) {
       // Configure the video device with values from globally stored locations.
@@ -242,22 +255,11 @@ export default class teachableMachine extends extension({
 
   useModel(url: string) {
     try {
-      const modelUrl = this.modelArgumentToURL(url);
-      this.getPredictionStateOrStartPredicting(modelUrl, true);
-      this.updateStageModel(modelUrl);
+      this.getPredictionStateOrStartPredicting(url, true);
+      this.updateStageModel(url);
     } catch (e) {
       this.teachableImageModel = null;
     }
-  }
-
-  modelArgumentToURL(modelArg: string) {
-    const endpointProvidedFromInterface = "https://teachablemachine.withgoogle.com/models/";
-    // NOTE: It's possible Google will change this endpoint in the future, and that will break this extension.
-    // TODO: https://github.com/mitmedialab/prg-extension-boilerplate/issues/343
-    const redirectEndpoint = "https://storage.googleapis.com/tm-model/";
-    return modelArg.startsWith(endpointProvidedFromInterface)
-      ? modelArg.replace(endpointProvidedFromInterface, redirectEndpoint)
-      : redirectEndpoint + modelArg + "/";
   }
 
   updateStageModel(modelUrl) {
@@ -295,10 +297,7 @@ export default class teachableMachine extends extension({
   }
 
   getModels() {
-    return [
-      { "text": "dummy-1", "value": "dummy-model.one/" },
-      { "text": "dummy-2", "value": "dummy-model.two/" }
-    ];
+    return this.modelsList;
   }
 
   model_match(state) {
