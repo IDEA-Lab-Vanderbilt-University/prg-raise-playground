@@ -341,12 +341,11 @@ export default class teachableMachine extends extension({
   /**
    * Opens a new tab with the Google Teachable Machine website
    */
-  @buttonBlock("Teachable Machine Site ↗")
-  openTeachableMachine() {
-    window.open('https://teachablemachine.withgoogle.com/train', '_blank');
-  }
+  // @buttonBlock("Teachable Machine Site ↗")
+  // openTeachableMachine() {
+  //   window.open('https://teachablemachine.withgoogle.com/train', '_blank');
+  // }
 
-  // TODO: make this a dropdown block
   @legacyBlock.useModelBlock(dynamicModelMenu)
   useModelBlock(url: string) {
     this.useModel(url);
