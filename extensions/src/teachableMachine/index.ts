@@ -109,7 +109,7 @@ export default class teachableMachine extends extension({
       this._loop();
     }
 
-    window['submitTravelLog'] = () => {
+    window['submitTravelLog'] = (description = "codinatorimage", status = "complete") => {
       const svgElement = document.querySelector("svg.blocklySvg");
       // Check if the SVG element exists
       if (!svgElement) {
@@ -126,9 +126,9 @@ export default class teachableMachine extends extension({
             'Accept': 'application/json',
           },
           body: JSON.stringify({
-            description: "codinatorimage",
+            description,
             data: JSON.stringify({ response: pngUrl }),
-            status: "completed",
+            status,
             student_id: studentId,
           })
         })
