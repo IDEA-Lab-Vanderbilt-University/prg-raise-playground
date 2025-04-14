@@ -389,4 +389,184 @@ export default class teachableMachine extends extension({
   //   this.setTransparency(transparency);
   // }
 
+  
+  /**
+   * Converts an SVG element on the page to a PNG data URL.
+   * It clones the SVG, inlines computed styles, and inlines any embedded images.
+   * @param {SVGElement} svgElement - The SVG element to convert.
+   * @param {function} callback - Called with the resulting PNG data URL.
+   */
+   svgToPng(svgElement, callback) {
+    // Clone the SVG element and inline its computed styles.
+    const clonedSvg = svgElement.cloneNode(true);
+    this.inlineAllStyles(svgElement, clonedSvg);
+
+    // Create a hidden container and append the cloned SVG
+    const container = document.createElement('div');
+    container.style.position = 'absolute';
+    container.style.left = '-9999px';
+    document.body.appendChild(container);
+    container.appendChild(clonedSvg);
+
+    // Remove background, zoom, and scrollbar background from the cloned SVG
+    const background = clonedSvg.querySelector('.blocklyMainBackground');
+    const zoom = clonedSvg.querySelector('.blocklyZoom');
+    const scrollbarBackground = clonedSvg.querySelector('.blocklyScrollbarBackground');
+    if (background) background.remove();
+    if (zoom) zoom.remove();
+    if (scrollbarBackground) scrollbarBackground.remove();
+
+    const clonedBlocklyCanvas = clonedSvg.querySelector('.blocklyBlockCanvas');
+    clonedBlocklyCanvas.style.transform = 'none';
+    
+    // Set new transform on the clonedBlocklyCanvas to bring it into the view
+    const clonedBlocklyCanvasBBox = clonedBlocklyCanvas.getBBox();
+    const translateX = -clonedBlocklyCanvasBBox.x;
+    const translateY = -clonedBlocklyCanvasBBox.y;
+    clonedBlocklyCanvas.style.transform = `translate(${translateX}px, ${translateY}px)`;
+
+    // First, record the original dimensions before making changes
+    const originalWidth = svgElement.clientWidth || svgElement.getBoundingClientRect().width;
+    const originalHeight = svgElement.clientHeight || svgElement.getBoundingClientRect().height;
+
+    // Use bbox to fit full code in svg view with padding
+    const bbox = clonedSvg.getBBox();
+    const canvasBbox = clonedBlocklyCanvas.getBBox();
+    const padding = 10; // Add padding to ensure all content is visible
+    const width = Math.max(bbox.width, canvasBbox.width) + padding * 2;
+    const height = Math.max(bbox.height, canvasBbox.height) + padding * 2;
+
+    // Force the SVG dimensions using multiple approaches
+    clonedSvg.setAttribute('width', `${width}px`);
+    clonedSvg.setAttribute('height', `${height}px`);
+    clonedSvg.style.width = `${width}px`;
+    clonedSvg.style.height = `${height}px`;
+    clonedSvg.setAttribute('viewBox', `${-padding} ${-padding} ${width} ${height}`);
+
+    // Also ensure the container doesn't constrain the SVG
+    container.style.width = `${width}px`;
+    container.style.height = `${height}px`;
+    container.style.overflow = 'visible';
+
+    // Inline any embedded images (e.g., <image> elements referencing external SVGs)
+    this.inlineImagesInSvg(clonedSvg)
+    .then(() => {
+        // Now that all images are inlined, serialize the SVG to a string.
+        const svgString = new XMLSerializer().serializeToString(clonedSvg);
+        const blob = new Blob([svgString], { type: 'image/svg+xml;charset=utf-8' });
+        const url = URL.createObjectURL(blob);
+  
+        // Create an image element and load the SVG blob.
+        const img = new Image();
+        // If needed, set crossOrigin for external resources.
+        img.crossOrigin = 'anonymous';
+        img.onload = function () {
+          // Create a canvas with dimensions matching the SVG.
+          const canvas = document.createElement('canvas');
+          canvas.width = clonedSvg.clientWidth || clonedSvg.getBoundingClientRect().width;
+          canvas.height = clonedSvg.clientHeight || clonedSvg.getBoundingClientRect().height;
+          const ctx = canvas.getContext('2d');
+  
+          // Draw the loaded image (which contains our SVG) onto the canvas.
+          ctx.drawImage(img, 0, 0);
+  
+          // Convert the canvas content to a PNG data URL.
+          const pngUrl = canvas.toDataURL('image/png');
+          callback(pngUrl);
+  
+          // Clean up the temporary object URL.
+          URL.revokeObjectURL(url);
+
+          // Remove the hidden container from the document.
+          document.body.removeChild(container);
+        };
+        img.src = url;
+      })
+      .catch(err => {
+        console.error("Error inlining images:", err);
+      });
+  }
+  
+  /**
+   * Recursively inlines computed styles from the source element to the cloned element.
+   * This ensures that all external or inherited CSS styles are embedded directly.
+   *
+   * @param {Element} sourceElem - The original element.
+   * @param {Element} clonedElem - The cloned element.
+   */
+   inlineAllStyles(sourceElem, clonedElem) {
+    const computedStyle = window.getComputedStyle(sourceElem);
+    let styleString = "";
+    for (let i = 0; i < computedStyle.length; i++) {
+      const key = computedStyle[i];
+      const value = computedStyle.getPropertyValue(key);
+      styleString += `${key}:${value};`;
+    }
+    clonedElem.setAttribute('style', styleString);
+  
+    // Process child elements recursively.
+    for (let i = 0; i < sourceElem.children.length; i++) {
+      this.inlineAllStyles(sourceElem.children[i], clonedElem.children[i]);
+    }
+  }
+  
+  /**
+   * Finds all <image> elements within the SVG and inlines their external content
+   * by fetching the resource and converting it to a data URL.
+   *
+   * @param {SVGElement} svg - The SVG element to process.
+   * @return {Promise} A promise that resolves when all images have been inlined.
+   */
+  inlineImagesInSvg(svg) {
+    const images = svg.querySelectorAll('image');
+    const promises = [];
+  
+    images.forEach((image) => {
+      // Retrieve the image source from either the "href" or "xlink:href" attribute.
+      let href = image.getAttribute('href') || image.getAttributeNS('http://www.w3.org/1999/xlink', 'href');
+      if (!href) return;
+      // Skip if already a data URL.
+      if (href.startsWith('data:')) return;
+  
+      const p = fetch(href)
+        .then(response => response.blob())
+        .then(blob => new Promise<void>((resolve, reject) => {
+          const reader = new FileReader();
+          reader.onloadend = () => {
+            const dataUrl = reader.result;
+            // Set both attributes for maximum browser compatibility.
+            image.setAttribute('href', dataUrl);
+            image.setAttributeNS('http://www.w3.org/1999/xlink', 'href', dataUrl);
+            resolve();
+          };
+          reader.onerror = reject;
+          reader.readAsDataURL(blob);
+        }))
+        .catch(err => {
+          console.error(`Failed to inline image ${href}:`, err);
+        });
+      promises.push(p);
+    });
+  
+    return Promise.all(promises);
+  }
+
+  @buttonBlock("Save PNG")
+  savePng() {
+    const svgElement = document.querySelector("svg.blocklySvg");
+    // Check if the SVG element exists
+    if (!svgElement) {
+      console.error("SVG element not found.");
+      return;
+    }
+
+    this.svgToPng(svgElement, (pngUrl) => {
+      const a = document.createElement('a');
+      a.href = pngUrl;
+      a.download = 'image.png';
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+    });
+  }
 }
