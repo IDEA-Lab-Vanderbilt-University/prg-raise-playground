@@ -14,7 +14,8 @@ const VideoState = {
   ON_FLIPPED: 'on-flipped',
 } as const;
 
-const ModelsEndpoint = 'http://localhost:8080/traininator-models';
+
+let apiEndpoint;
 
 const dynamicClassMenu = (self: teachableMachine) => ({
   argumentMethods: { 0: { getItems: () => self.getClasses() } }
@@ -67,6 +68,15 @@ export default class teachableMachine extends extension({
 
   async init(env: Environment) {
 
+
+    // Detect if running on localhost
+    if(window.location.hostname === 'localhost') {
+      apiEndpoint = 'http://localhost:8080';
+    } else {
+      apiEndpoint = 'https://spotcommandapp.com/api';
+    }
+
+
     /**
      * The last millisecond epoch timestamp that the video stream was
      * analyzed.
@@ -83,8 +93,8 @@ export default class teachableMachine extends extension({
     const urlParams = new URLSearchParams(window.location.search);
     const studentId = urlParams.get('student_id');
     try {
-      const res = await (await fetch(`${ModelsEndpoint}?student_id=${studentId}`)).json();
-      this.modelsList = res.map(m => ({ text: m.name, value: `${ModelsEndpoint}/${m.id}/` }))
+      const res = await (await fetch(`${apiEndpoint}/traininator-models?student_id=${studentId}`)).json();
+      this.modelsList = res.map(m => ({ text: m.name, value: `${apiEndpoint}/traininator-models/${m.id}/` }))
     } catch (e) {
       console.log(e);
     }
@@ -98,6 +108,39 @@ export default class teachableMachine extends extension({
       // Kick off looping the analysis logic.
       this._loop();
     }
+
+    window['submitTravelLog'] = () => {
+      const svgElement = document.querySelector("svg.blocklySvg");
+      // Check if the SVG element exists
+      if (!svgElement) {
+        console.error("SVG element not found.");
+        return;
+      }
+
+      this.svgToPng(svgElement, (pngUrl) => {
+        // send the image to the API endpoint
+        fetch(`${apiEndpoint}/travel-logs`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Accept': 'application/json',
+          },
+          body: JSON.stringify({
+            description: "codinatorimage",
+            data: JSON.stringify({ response: pngUrl }),
+            status: "completed",
+            student_id: studentId,
+          })
+        })
+        .then(response => {
+          if (!response.ok) {
+            throw new Error('Failed to submit travel log');
+          }
+          return response.json();
+        });
+      });
+      
+    };
   }
 
   /**
@@ -551,22 +594,22 @@ export default class teachableMachine extends extension({
     return Promise.all(promises);
   }
 
-  @buttonBlock("Save PNG")
-  savePng() {
-    const svgElement = document.querySelector("svg.blocklySvg");
-    // Check if the SVG element exists
-    if (!svgElement) {
-      console.error("SVG element not found.");
-      return;
-    }
+  // @buttonBlock("Save PNG")
+  // savePng() {
+  //   const svgElement = document.querySelector("svg.blocklySvg");
+  //   // Check if the SVG element exists
+  //   if (!svgElement) {
+  //     console.error("SVG element not found.");
+  //     return;
+  //   }
 
-    this.svgToPng(svgElement, (pngUrl) => {
-      const a = document.createElement('a');
-      a.href = pngUrl;
-      a.download = 'image.png';
-      document.body.appendChild(a);
-      a.click();
-      document.body.removeChild(a);
-    });
-  }
+  //   this.svgToPng(svgElement, (pngUrl) => {
+  //     const a = document.createElement('a');
+  //     a.href = pngUrl;
+  //     a.download = 'image.png';
+  //     document.body.appendChild(a);
+  //     a.click();
+  //     document.body.removeChild(a);
+  //   });
+  // }
 }
