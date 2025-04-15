@@ -71,7 +71,7 @@ export default class teachableMachine extends extension({
 
     // Detect if running on localhost
     const host = urlParams.get('host') || window.location.hostname;
-    
+
     if (host.includes('localhost')) {
       apiEndpoint = 'http://localhost:8080';
     } else {
@@ -145,6 +145,11 @@ export default class teachableMachine extends extension({
       if (event.data.type === 'submitTravelLog') {
         const { description, status } = event.data;
         window['submitTravelLog'](description, status);
+
+        // Send a message back to the parent window
+        if (window.parent) {
+          window.parent.postMessage({ type: 'travelLogSubmitted' }, '*');
+        }
       }
     });
   }
