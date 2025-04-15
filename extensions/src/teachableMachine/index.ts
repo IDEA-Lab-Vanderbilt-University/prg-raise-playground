@@ -141,6 +141,13 @@ export default class teachableMachine extends extension({
       });
       
     };
+
+    window.addEventListener('message', (event) => {
+      if (event.data.type === 'submitTravelLog') {
+        const { description, status } = event.data;
+        window['submitTravelLog'](description, status);
+      }
+    });
   }
 
   /**
