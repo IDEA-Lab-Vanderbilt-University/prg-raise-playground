@@ -70,7 +70,7 @@ export default class teachableMachine extends extension({
 
 
     // Detect if running on localhost
-    if(window.location.hostname === 'localhost') {
+    if(window.location.hostname === 'localhost' || (window.parent && window.parent.location.hostname === 'localhost')) {
       apiEndpoint = 'http://localhost:8080';
     } else {
       apiEndpoint = 'https://spotcommandapp.com/api';
