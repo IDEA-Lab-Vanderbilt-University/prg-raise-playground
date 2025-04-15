@@ -139,7 +139,6 @@ export default class teachableMachine extends extension({
           return response.json();
         });
       });
-      
     };
 
     window.addEventListener('message', (event) => {
