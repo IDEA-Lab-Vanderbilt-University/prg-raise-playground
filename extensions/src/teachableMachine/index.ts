@@ -67,15 +67,16 @@ export default class teachableMachine extends extension({
   };
 
   async init(env: Environment) {
-
+    const urlParams = new URLSearchParams(window.location.search);
 
     // Detect if running on localhost
-    if(window.location.hostname === 'localhost' || (window.parent && window.parent.location.hostname === 'localhost')) {
+    const host = urlParams.get('host') || window.location.hostname;
+    
+    if (host.includes('localhost')) {
       apiEndpoint = 'http://localhost:8080';
     } else {
       apiEndpoint = 'https://spotcommandapp.com/api';
     }
-
 
     /**
      * The last millisecond epoch timestamp that the video stream was
@@ -90,7 +91,6 @@ export default class teachableMachine extends extension({
     this.modelConfidences = {};
 
     // get list of models
-    const urlParams = new URLSearchParams(window.location.search);
     const studentId = urlParams.get('student_id');
     try {
       const res = await (await fetch(`${apiEndpoint}/traininator-models?student_id=${studentId}`)).json();
