@@ -3,6 +3,7 @@ import tmImage from '@teachablemachine/image';
 import tmPose from '@teachablemachine/pose';
 import { create } from '@tensorflow-models/speech-commands';
 import { legacyFullSupport, legacyIncrementalSupport, } from "./legacy";
+import { data } from "@tensorflow/tfjs";
 
 const { legacyBlock, legacyExtension } = legacyIncrementalSupport.for<teachableMachine>();
 const VideoState = {
@@ -134,8 +135,18 @@ export default class teachableMachine extends extension({
         })
         .then(response => {
           if (!response.ok) {
+            if(window.parent) {
+              window.parent.postMessage({ type: 'travelLogError', data: response.statusText }, '*');
+            }
+
             throw new Error('Failed to submit travel log');
           }
+
+          // Send a message back to the parent window
+          if (window.parent) {
+            window.parent.postMessage({ type: 'travelLogSubmitted' }, '*');
+          }
+
           return response.json();
         });
       });
@@ -145,11 +156,6 @@ export default class teachableMachine extends extension({
       if (event.data.type === 'submitTravelLog') {
         const { description, status } = event.data;
         window['submitTravelLog'](description, status);
-
-        // Send a message back to the parent window
-        if (window.parent) {
-          window.parent.postMessage({ type: 'travelLogSubmitted' }, '*');
-        }
       }
     });
   }
