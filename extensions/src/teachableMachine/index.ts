@@ -154,7 +154,7 @@ export default class teachableMachine extends extension({
 
     window.addEventListener('message', (event) => {
       if (event.data.type === 'submitTravelLog') {
-        const { description, status } = event.data;
+        const { description, status } = event.data.data;
         console.log("Received message from parent window:", event.data);
         window['submitTravelLog'](description, status);
       }
