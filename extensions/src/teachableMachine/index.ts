@@ -1,9 +1,8 @@
-import { Environment, buttonBlock, extension } from "$common";
+import { Environment, extension } from "$common";
 import tmImage from '@teachablemachine/image';
 import tmPose from '@teachablemachine/pose';
 import { create } from '@tensorflow-models/speech-commands';
-import { legacyFullSupport, legacyIncrementalSupport, } from "./legacy";
-import { data } from "@tensorflow/tfjs";
+import { legacyIncrementalSupport, } from "./legacy";
 
 const { legacyBlock, legacyExtension } = legacyIncrementalSupport.for<teachableMachine>();
 const VideoState = {
@@ -47,6 +46,7 @@ export default class teachableMachine extends extension({
   predictionState = {};
   teachableImageModel;
   latestAudioResults: any;
+  env: Environment;
 
   test: string = "";
 
@@ -68,6 +68,7 @@ export default class teachableMachine extends extension({
   };
 
   async init(env: Environment) {
+    this.env = env;
     const urlParams = new URLSearchParams(window.location.search);
 
     // Detect if running on localhost
@@ -152,6 +153,30 @@ export default class teachableMachine extends extension({
       });
     };
 
+    window['saveCodinatorData'] = async () => {
+      const code: Blob = await window.vm.saveProjectSb3();
+      
+      // Check studentId
+      if (!studentId) {
+        console.error("Student ID is not set.");
+        return;
+      }
+
+      // Send the code to the API endpoint
+      fetch(`${apiEndpoint}/codinator-projects`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Accept': 'application/json',
+        },
+        body: JSON.stringify({
+          student_id: studentId,
+          name: "Codinator Project " + new Date().toISOString(),
+          sb3: code,
+        })
+      })  
+    }
+
     window.addEventListener('message', (event) => {
       if (event.data.type === 'submitTravelLog') {
         const { description, status } = event.data.data;
@@ -159,6 +184,8 @@ export default class teachableMachine extends extension({
         window['submitTravelLog'](description, status);
       }
     });
+
+    window['teachableMachineExt'] = this;
   }
 
   /**
@@ -291,13 +318,10 @@ export default class teachableMachine extends extension({
     const metadataURL = modelUrl + "metadata.json" + avoidCache;
     const customMobileNet = await tmImage.load(modelURL, metadataURL);
     if ((customMobileNet as any)._metadata.hasOwnProperty('tfjsSpeechCommandsVersion')) {
-      // customMobileNet.dispose(); // too early to dispose
-      //console.log("We got a speech net yay")
       const recognizer = create("BROWSER_FFT", undefined, modelURL, metadataURL);
       await recognizer.ensureModelLoaded();
       await recognizer.listen(async result => {
         this.latestAudioResults = result;
-        //console.log(result);
       }, {
         includeSpectrogram: true, // in case listen should return result.spectrogram
         probabilityThreshold: 0.75,
@@ -399,23 +423,10 @@ export default class teachableMachine extends extension({
     this.runtime.ioDevices.video.setPreviewGhost(trans);
   }
 
-  /**
-   * Opens a new tab with the Google Teachable Machine website
-   */
-  // @buttonBlock("Teachable Machine Site ↗")
-  // openTeachableMachine() {
-  //   window.open('https://teachablemachine.withgoogle.com/train', '_blank');
-  // }
-
   @legacyBlock.useModelBlock(dynamicModelMenu)
   useModelBlock(url: string) {
     this.useModel(url);
   }
-
-  // @legacyBlock.whenModelMatches(dynamicClassMenu)
-  // whenModelMatches(state: string) {
-  //   return this.model_match(state);
-  // }
 
   @legacyBlock.modelPrediction()
   modelPrediction() {
@@ -426,12 +437,7 @@ export default class teachableMachine extends extension({
   modelMatches(state: string) {
     return this.model_match(state);
   }
-
-  // @legacyBlock.classConfidence(dynamicClassMenu)
-  // classConfidence(state: string) {
-  //   return this.getClassConfidence(state);
-  // }
-
+  
   @legacyBlock.videoToggle({
     argumentMethods: {
       0: {
@@ -445,12 +451,6 @@ export default class teachableMachine extends extension({
     this.toggleVideo(state);
   }
 
-  // @legacyBlock.setVideoTransparency()
-  // setVideoTransparency(transparency: number) {
-  //   this.setTransparency(transparency);
-  // }
-
-  
   /**
    * Converts an SVG element on the page to a PNG data URL.
    * It clones the SVG, inlines computed styles, and inlines any embedded images.
@@ -485,10 +485,6 @@ export default class teachableMachine extends extension({
     const translateX = -clonedBlocklyCanvasBBox.x;
     const translateY = -clonedBlocklyCanvasBBox.y;
     clonedBlocklyCanvas.style.transform = `translate(${translateX}px, ${translateY}px)`;
-
-    // First, record the original dimensions before making changes
-    const originalWidth = svgElement.clientWidth || svgElement.getBoundingClientRect().width;
-    const originalHeight = svgElement.clientHeight || svgElement.getBoundingClientRect().height;
 
     // Use bbox to fit full code in svg view with padding
     const bbox = clonedSvg.getBBox();
@@ -611,23 +607,4 @@ export default class teachableMachine extends extension({
   
     return Promise.all(promises);
   }
-
-  // @buttonBlock("Save PNG")
-  // savePng() {
-  //   const svgElement = document.querySelector("svg.blocklySvg");
-  //   // Check if the SVG element exists
-  //   if (!svgElement) {
-  //     console.error("SVG element not found.");
-  //     return;
-  //   }
-
-  //   this.svgToPng(svgElement, (pngUrl) => {
-  //     const a = document.createElement('a');
-  //     a.href = pngUrl;
-  //     a.download = 'image.png';
-  //     document.body.appendChild(a);
-  //     a.click();
-  //     document.body.removeChild(a);
-  //   });
-  // }
 }
