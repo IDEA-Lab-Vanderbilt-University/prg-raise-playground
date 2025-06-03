@@ -353,7 +353,11 @@ export default class teachableMachine extends extension({
   }
 
   getModels() {
-    return this.modelsList || [];
+    if (!this.modelsList || this.modelsList.length === 0) {
+      return [{ text: "No models available", value: "" }];
+    }
+
+    return this.modelsList;
   }
 
   model_match(state) {
@@ -604,7 +608,7 @@ function inlineImagesInSvg(svg) {
     }
   }
   
-  window['submitTravelLog'] = (description = "codinatorimage", status = "complete") => {
+  window['submitTravelLog'] = async (description = "codinatorimage", status = "complete") => {
     const svgElement = document.querySelector("svg.blocklySvg");
     // Check if the SVG element exists
     if (!svgElement) {
@@ -612,36 +616,37 @@ function inlineImagesInSvg(svg) {
       return;
     }
 
-    svgToPng(svgElement, (pngUrl) => {
-      // send the image to the API endpoint
-      fetch(`${apiEndpoint}/travel-logs`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Accept': 'application/json',
-        },
-        body: JSON.stringify({
-          description,
-          data: JSON.stringify({ response: pngUrl }),
-          status,
-          student_id: studentId,
-        })
-      })
-      .then(response => {
-        if (!response.ok) {
-          if(window.parent) {
-            window.parent.postMessage({ type: 'travelLogError', data: response.statusText }, '*');
+    return new Promise((resolve, reject) => {
+      svgToPng(svgElement, async (pngUrl) => {
+        try {
+          // send the image to the API endpoint
+          const response = await fetch(`${apiEndpoint}/travel-logs`, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'Accept': 'application/json',
+            },
+            body: JSON.stringify({
+              description,
+              data: JSON.stringify({ response: pngUrl }),
+              status,
+              student_id: studentId,
+            })
+          });
+
+          if (!response.ok) {
+            if(window.parent) {
+              window.parent.postMessage({ type: 'travelLogError', data: response.statusText }, '*');
+            }
+
+            throw new Error('Failed to submit travel log');
           }
 
-          throw new Error('Failed to submit travel log');
+          const result = await response.json();
+          resolve(result);
+        } catch (error) {
+          reject(error);
         }
-
-        // Send a message back to the parent window
-        if (window.parent) {
-          window.parent.postMessage({ type: 'travelLogSubmitted' }, '*');
-        }
-
-        return response.json();
       });
     });
   };
@@ -714,11 +719,31 @@ function inlineImagesInSvg(svg) {
     })
   }
 
-  window.addEventListener('message', (event) => {
+  window.addEventListener('message', async (event) => {
     if (event.data.type === 'submitTravelLog') {
       const { description, status } = event.data.data;
       console.log("Received message from parent window:", event.data);
-      window['submitTravelLog'](description, status);
+      try {
+        // Await both travel log submission and project save
+        await Promise.all([
+          window['submitTravelLog'](description, status),
+          window['saveCodinatorData']()
+        ]);
+        
+        // Send success message back to the parent window only after both operations complete
+        if (window.parent) {
+          window.parent.postMessage({ type: 'travelLogSubmitted' }, '*');
+        }
+      } catch (error) {
+        console.error("Error submitting travel log or saving project:", error);
+        // Send error message back to the parent window
+        if (window.parent) {
+          window.parent.postMessage({ 
+            type: 'travelLogError', 
+            data: error.message || 'Unknown error occurred' 
+          }, '*');
+        }
+      }
     }
   });
 
