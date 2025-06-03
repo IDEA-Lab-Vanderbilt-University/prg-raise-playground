@@ -163,6 +163,9 @@ export default class teachableMachine extends extension({
       }
 
       // Send the code to the API endpoint
+      const arrayBuffer = await code.arrayBuffer();
+      const uint8Array = new Uint8Array(arrayBuffer);
+      
       fetch(`${apiEndpoint}/codinator-projects`, {
         method: 'POST',
         headers: {
@@ -172,9 +175,10 @@ export default class teachableMachine extends extension({
         body: JSON.stringify({
           student_id: studentId,
           name: "Codinator Project " + new Date().toISOString(),
-          sb3: code,
+          sb3: Array.from(uint8Array),
+          json: JSON.stringify({}),
         })
-      })  
+      })
     }
 
     window.addEventListener('message', (event) => {
