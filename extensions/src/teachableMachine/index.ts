@@ -4,6 +4,14 @@ import tmPose from '@teachablemachine/pose';
 import { create } from '@tensorflow-models/speech-commands';
 import { legacyIncrementalSupport, } from "./legacy";
 
+// Extend the Window interface to include vm property
+declare global {
+  interface Window {
+    vm: any;
+    teachableMachineExt: any;
+  }
+}
+
 const { legacyBlock, legacyExtension } = legacyIncrementalSupport.for<teachableMachine>();
 const VideoState = {
   /** Video turned off. */
@@ -14,20 +22,30 @@ const VideoState = {
   ON_FLIPPED: 'on-flipped',
 } as const;
 
-let apiEndpoint;
-var studentId = null;
+let apiEndpoint: string | undefined;
+var studentId: string | null = null;
 
-// Get the student ID from the URL parameters
-let urlParams = new URLSearchParams(window.location.search);
-studentId = urlParams.get('student_id');
+// Initialize these values only in browser environment
+let urlParams: URLSearchParams | null = null;
 
-// Detect if running on localhost
-const host = urlParams.get('host') || window.location.hostname;
+// Initialize immediately if we're in a browser environment
+if (typeof window !== 'undefined' && typeof window.location !== 'undefined') {
+  try {
+    urlParams = new URLSearchParams(window.location.search);
+    studentId = urlParams.get('student_id');
 
-if (host.includes('localhost')) {
-  apiEndpoint = 'http://localhost:8080';
-} else {
-  apiEndpoint = 'https://spotcommandapp.com/api';
+    // Detect if running on localhost
+    const host = urlParams.get('host') || window.location.hostname;
+
+    if (host.includes('localhost')) {
+      apiEndpoint = 'http://localhost:8080';
+    } else {
+      apiEndpoint = 'https://spotcommandapp.com/api';
+    }
+  } catch (e) {
+    // Silently fail if window.location isn't available
+    console.warn('Could not initialize from window.location:', e);
+  }
 }
 
 const dynamicClassMenu = (self: teachableMachine) => ({
@@ -82,8 +100,26 @@ export default class teachableMachine extends extension({
 
   async init(env: Environment) {
     this.env = env;
-    urlParams = new URLSearchParams(window.location.search);
-    studentId = urlParams.get('student_id');
+    
+    // Ensure URL params and student ID are initialized in case they weren't set at module load
+    if (typeof window !== 'undefined' && typeof window.location !== 'undefined') {
+      if (!urlParams) {
+        urlParams = new URLSearchParams(window.location.search);
+      }
+      if (!studentId) {
+        studentId = urlParams.get('student_id');
+      }
+
+      // Set API endpoint if not already set
+      if (!apiEndpoint) {
+        const host = urlParams.get('host') || window.location.hostname;
+        if (host.includes('localhost')) {
+          apiEndpoint = 'http://localhost:8080';
+        } else {
+          apiEndpoint = 'https://spotcommandapp.com/api';
+        }
+      }
+    }
 
     /**
      * The last millisecond epoch timestamp that the video stream was
@@ -99,10 +135,15 @@ export default class teachableMachine extends extension({
 
     // get list of models
     try {
-      const res = await (await fetch(`${apiEndpoint}/traininator-models?student_id=${studentId}`)).json();
-      this.modelsList = res.map(m => ({ text: m.name, value: `${apiEndpoint}/traininator-models/${m.id}/` }))
+      if (apiEndpoint && studentId) {
+        const res = await (await fetch(`${apiEndpoint}/traininator-models?student_id=${studentId}`)).json();
+        this.modelsList = res.map(m => ({ text: m.name, value: `${apiEndpoint}/traininator-models/${m.id}/` }))
+      } else {
+        this.modelsList = [];
+      }
     } catch (e) {
       console.log(e);
+      this.modelsList = [];
     }
 
     if (this.runtime.ioDevices) {
@@ -312,7 +353,7 @@ export default class teachableMachine extends extension({
   }
 
   getModels() {
-    return this.modelsList;
+    return this.modelsList || [];
   }
 
   model_match(state) {
@@ -540,9 +581,27 @@ function inlineImagesInSvg(svg) {
 }
 
 (async function setup() {
-  // Prevent running in build scripts
-  if (typeof window === 'undefined' || !window.document) {
+  // Prevent running in build scripts or Node.js environments
+  if (typeof window === 'undefined' || typeof document === 'undefined' || !window.document) {
     return;
+  }
+
+  // Re-initialize API endpoint and student ID in browser environment (in case they changed)
+  if (!urlParams) {
+    urlParams = new URLSearchParams(window.location.search);
+  }
+  if (!studentId) {
+    studentId = urlParams.get('student_id');
+  }
+
+  // Detect if running on localhost (in case apiEndpoint wasn't set)
+  if (!apiEndpoint) {
+    const host = urlParams.get('host') || window.location.hostname;
+    if (host.includes('localhost')) {
+      apiEndpoint = 'http://localhost:8080';
+    } else {
+      apiEndpoint = 'https://spotcommandapp.com/api';
+    }
   }
   
   window['submitTravelLog'] = (description = "codinatorimage", status = "complete") => {
