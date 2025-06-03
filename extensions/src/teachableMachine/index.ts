@@ -540,6 +540,11 @@ function inlineImagesInSvg(svg) {
 }
 
 (async function setup() {
+  // Prevent running in build scripts
+  if (typeof window === 'undefined' || !window.document) {
+    return;
+  }
+  
   window['submitTravelLog'] = (description = "codinatorimage", status = "complete") => {
     const svgElement = document.querySelector("svg.blocklySvg");
     // Check if the SVG element exists
