@@ -176,7 +176,7 @@ export default class teachableMachine extends extension({
           student_id: studentId,
           name: "Codinator Project " + new Date().toISOString(),
           sb3: Array.from(uint8Array),
-          json: JSON.stringify({}),
+          json: window.vm.toJSON(),
         })
       })
     }
