@@ -153,6 +153,46 @@ export default class teachableMachine extends extension({
       });
     };
 
+    window['loadLastCodinatorProject'] = async () => {
+      // Check studentId
+      if (!studentId) {
+        console.error("Student ID is not set.");
+        return;
+      }
+
+      let lastProjectId;
+      let lastProjectJSON;
+
+      // Fetch the last project from the API endpoint
+      fetch(`${apiEndpoint}/codinator-projects?student_id=${studentId}`, {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+          'Accept': 'application/json',
+        }
+      })
+      .then(response => {
+        if (!response.ok) {
+          console.error("Failed to load last project");
+          return;
+        }
+        return response.json();
+      })
+      .then(data => {
+        if (!data || data.length === 0) {
+          console.error("No project found");
+          return;
+        }
+        
+        // Get ID and  json field from the project
+        lastProjectId = data[data.length - 1].id;
+        lastProjectJSON = data[data.length - 1].json;
+
+        // Load the project into the editor
+        window.vm.loadProject(lastProjectJSON);
+      });
+    };
+
     window['saveCodinatorData'] = async () => {
       const code: Blob = await window.vm.saveProjectSb3();
       
