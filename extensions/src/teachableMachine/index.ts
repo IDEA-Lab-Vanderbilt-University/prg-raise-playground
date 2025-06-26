@@ -13,6 +13,7 @@ declare global {
 }
 
 const { legacyBlock, legacyExtension } = legacyIncrementalSupport.for<teachableMachine>();
+
 const VideoState = {
   /** Video turned off. */
   OFF: 'off',
