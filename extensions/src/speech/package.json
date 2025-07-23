@@ -1,0 +1,18 @@
+{
+  "name": "speech-extension",
+  "version": "1.0.0",
+  "description": "An extension created using the PRG AI Blocks framework",
+  "main": "index.ts",
+  "scripts": {
+    "directory": "echo speech",
+    "test": "npm run test --prefix ../../ -- speech/index.test.ts",
+    "dev": "npm run dev --prefix ../../../ -- --include speech",
+    "add:ui": "npm run add:ui --prefix ../../../  -- speech",
+    "add:arg": "npm run --prefix ../../../-- speech"
+  },
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "format-message": "^6.2.4"
+  }
+}
