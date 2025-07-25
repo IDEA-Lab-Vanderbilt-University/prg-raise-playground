@@ -1,5 +1,4 @@
 import { ArgumentType, BlockType, Environment, ExtensionMenuDisplayDetails, extension, block, fetchWithTimeout, wrapClamp } from "$common";
-import { setMenu } from "$common/extension/mixins/base/scratchInfo/menus";
 import BlockUtility from "$scratch-vm/engine/block-utility";
 import { getSynthesisURL } from "./services/synthesis";
 import { getState, setState, State } from "./state";
@@ -8,7 +7,8 @@ import voices, { Voice } from "./voices";
 
 const details: ExtensionMenuDisplayDetails = {
   name: "Speech",
-  description: "Blocks for speech synthesis and recognition.",
+  // description: "Blocks for speech synthesis and recognition.",
+  description: "Blocks for speech synthesis.",
   iconURL: "Replace with the name of your icon image file (which should be placed in the same directory as this file)",
   insetIconURL: "Replace with the name of your inset icon image file (which should be placed in the same directory as this file)"
 };
@@ -16,10 +16,10 @@ const details: ExtensionMenuDisplayDetails = {
 export default class SpeechExtension extends extension(details) {
 
   init(env: Environment) {
-    this.lastRecognizedSpeech = "";
+    // this.lastRecognizedSpeech = "";
   }
 
-  lastRecognizedSpeech: string;
+  // lastRecognizedSpeech: string;
   currentLoudness: number;
   loudnessTimer = timer();
   soundPlayers = new Map();
@@ -34,23 +34,23 @@ export default class SpeechExtension extends extension(details) {
     await this.speak(text, getState(target));
   }
 
-  @block({
-    type: BlockType.Command,
-    text: (prompt) => `speak ${prompt} and wait for response`,
-    args: [{ type: ArgumentType.String, defaultValue: "How are you?" }]
-  })
-  async askSpeechRecognition(prompt: string, { target }: BlockUtility) {
-    await this.speak(prompt, getState(target));
-    await this.recognizeSpeech();
-  }
+  // @block({
+  //   type: BlockType.Command,
+  //   text: (prompt) => `speak ${prompt} and wait for response`,
+  //   args: [{ type: ArgumentType.String, defaultValue: "How are you?" }]
+  // })
+  // async askSpeechRecognition(prompt: string, { target }: BlockUtility) {
+  //   await this.speak(prompt, getState(target));
+  //   await this.recognizeSpeech();
+  // }
 
-  @block({
-    type: BlockType.Reporter,
-    text: "response"
-  })
-  getRecognizedSpeech() {
-    return this.lastRecognizedSpeech;
-  }
+  // @block({
+  //   type: BlockType.Reporter,
+  //   text: "response"
+  // })
+  // getRecognizedSpeech() {
+  //   return this.lastRecognizedSpeech;
+  // }
 
   @block({
     type: BlockType.Command,
@@ -113,53 +113,53 @@ export default class SpeechExtension extends extension(details) {
     return this.currentLoudness;
   }
 
-  private async recognizeSpeech() {
-    return await new Promise<string>((resolve, reject) => {
-      const recognition = new webkitSpeechRecognition();
-      recognition.continuous = false;
-      recognition.interimResults = false;
-      recognition.lang = 'en-US';
+  // private async recognizeSpeech() {
+  //   return await new Promise<string>((resolve, reject) => {
+  //     const recognition = new webkitSpeechRecognition();
+  //     recognition.continuous = false;
+  //     recognition.interimResults = false;
+  //     recognition.lang = 'en-US';
 
-      let resolved = false;
+  //     let resolved = false;
 
-      recognition.onresult = (event) => {
-        if (!resolved) {
-          resolved = true;
-          const transcript = event.results.length === 0 ? null : event.results[0][0].transcript;
-          resolve(transcript);
-        }
-        recognition.stop();
-      };
+  //     recognition.onresult = (event) => {
+  //       if (!resolved) {
+  //         resolved = true;
+  //         const transcript = event.results.length === 0 ? null : event.results[0][0].transcript;
+  //         resolve(transcript);
+  //       }
+  //       recognition.stop();
+  //     };
 
-      recognition.onerror = (event) => {
-        if (!resolved) {
-          resolved = true;
-          reject(event.error);
-        }
-        recognition.stop();
-      };
+  //     recognition.onerror = (event) => {
+  //       if (!resolved) {
+  //         resolved = true;
+  //         reject(event.error);
+  //       }
+  //       recognition.stop();
+  //     };
 
-      recognition.onend = () => {
-        if (!resolved) {
-          resolved = true;
-          resolve(null);
-        }
-      };
+  //     recognition.onend = () => {
+  //       if (!resolved) {
+  //         resolved = true;
+  //         resolve(null);
+  //       }
+  //     };
 
-      try {
-        recognition.start();
-      } catch (err) {
-        if (!resolved) {
-          resolved = true;
-          reject(err);
-        }
-      }
-    }).then(result => {
-      this.lastRecognizedSpeech = result ?? this.lastRecognizedSpeech;
-      return result;
-    }).catch(error => {
-      console.warn("Speech recognition error:", error);
-      return null;
-    });
-  }
+  //     try {
+  //       recognition.start();
+  //     } catch (err) {
+  //       if (!resolved) {
+  //         resolved = true;
+  //         reject(err);
+  //       }
+  //     }
+  //   }).then(result => {
+  //     this.lastRecognizedSpeech = result ?? this.lastRecognizedSpeech;
+  //     return result;
+  //   }).catch(error => {
+  //     console.warn("Speech recognition error:", error);
+  //     return null;
+  //   });
+  // }
 }
