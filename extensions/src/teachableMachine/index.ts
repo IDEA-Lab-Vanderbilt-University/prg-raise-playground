@@ -72,6 +72,7 @@ export default class teachableMachine extends extension({
 }, "indicators") {
   lastUpdate: number;
   modelsList: { text: string, value: string }[];
+  modelsListPromise: Promise<void> | null = null;
   maxConfidence: number;
   modelConfidences: {};
   isPredicting: number;
@@ -135,19 +136,7 @@ export default class teachableMachine extends extension({
     this.modelConfidences = {};
 
     // get list of models
-    (async () => {
-      try {
-        if (apiEndpoint && studentId) {
-          const res = await (await fetch(`${apiEndpoint}/traininator-models?student_id=${studentId}`)).json();
-          this.modelsList = res.map(m => ({ text: m.name, value: `${apiEndpoint}/traininator-models/${m.id}/` }))
-        } else {
-          this.modelsList = [];
-        }
-      } catch (e) {
-        console.log(e);
-        this.modelsList = [];
-      }
-    })();
+    this.modelsListPromise = this.loadModelsList();
 
     if (this.runtime.ioDevices) {
       // Configure the video device with values from globally stored locations.
@@ -356,11 +345,39 @@ export default class teachableMachine extends extension({
   }
 
   getModels() {
+    // If models are still loading, show a loading menu
+    if (this.modelsListPromise && (!this.modelsList || this.modelsList.length === 0)) {
+       this.modelsListPromise;
+       // When the promise resolves, force a UI update
+       this.modelsListPromise.then(() => {
+         if (window && window.vm) {
+           window.vm.refreshWorkspace();
+         }
+       });
+      return [{ text: "Loading models...", value: "" }];
+    }
     if (!this.modelsList || this.modelsList.length === 0) {
       return [{ text: "No models available", value: "" }];
     }
-
     return this.modelsList;
+  }
+
+  async loadModelsList() {
+    try {
+      if (apiEndpoint && studentId) {
+        const res = await (await fetch(`${apiEndpoint}/traininator-models?student_id=${studentId}`)).json();
+        this.modelsList = res.map(m => ({ text: m.name, value: `${apiEndpoint}/traininator-models/${m.id}/` }));
+        // Force UI update if needed
+        if (this.runtime && this.runtime.requestToolboxExtensionsUpdate) {
+          this.runtime.requestToolboxExtensionsUpdate();
+        }
+      } else {
+        this.modelsList = [];
+      }
+    } catch (e) {
+      console.log(e);
+      this.modelsList = [];
+    }
   }
 
   model_match(state) {
