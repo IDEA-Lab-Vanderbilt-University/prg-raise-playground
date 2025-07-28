@@ -135,17 +135,19 @@ export default class teachableMachine extends extension({
     this.modelConfidences = {};
 
     // get list of models
-    try {
-      if (apiEndpoint && studentId) {
-        const res = await (await fetch(`${apiEndpoint}/traininator-models?student_id=${studentId}`)).json();
-        this.modelsList = res.map(m => ({ text: m.name, value: `${apiEndpoint}/traininator-models/${m.id}/` }))
-      } else {
+    (async () => {
+      try {
+        if (apiEndpoint && studentId) {
+          const res = await (await fetch(`${apiEndpoint}/traininator-models?student_id=${studentId}`)).json();
+          this.modelsList = res.map(m => ({ text: m.name, value: `${apiEndpoint}/traininator-models/${m.id}/` }))
+        } else {
+          this.modelsList = [];
+        }
+      } catch (e) {
+        console.log(e);
         this.modelsList = [];
       }
-    } catch (e) {
-      console.log(e);
-      this.modelsList = [];
-    }
+    })();
 
     if (this.runtime.ioDevices) {
       // Configure the video device with values from globally stored locations.
