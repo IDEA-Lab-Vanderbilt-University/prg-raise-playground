@@ -9,8 +9,8 @@ const details: ExtensionMenuDisplayDetails = {
   name: "Speech",
   // description: "Blocks for speech synthesis and recognition.",
   description: "Blocks for speech synthesis.",
-  iconURL: "Replace with the name of your icon image file (which should be placed in the same directory as this file)",
-  insetIconURL: "Replace with the name of your inset icon image file (which should be placed in the same directory as this file)"
+  iconURL: "comment.png",
+  insetIconURL: "comment.png"
 };
 
 export default class SpeechExtension extends extension(details) {

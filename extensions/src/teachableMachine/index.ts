@@ -66,8 +66,8 @@ const dynamicModelMenu = (self: teachableMachine) => ({
 export default class teachableMachine extends extension({
   name: "Traininator",
   description: "Use your Machine Learning models in your Scratch project!",
-  iconURL: "teachable-machine-blocks.png",
-  insetIconURL: "teachable-machine-blocks-small.svg",
+  iconURL: "spot.png",
+  insetIconURL: "spot.png",
   tags: ["Dancing with AI", "Made by PRG"]
 }, "indicators") {
   lastUpdate: number;
