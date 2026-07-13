@@ -24,31 +24,45 @@ const VideoState = {
 } as const;
 
 let apiEndpoint: string | undefined;
-var studentId: string | null = null;
+let studentId: string | null = null;
 
 // Initialize these values only in browser environment
 let urlParams: URLSearchParams | null = null;
 
-// Initialize immediately if we're in a browser environment
-if (typeof window !== 'undefined' && typeof window.location !== 'undefined') {
-  try {
-    urlParams = new URLSearchParams(window.location.search);
-    studentId = urlParams.get('student_id');
-
-    // Use explicit host param if provided, otherwise detect if running on localhost
-    const host = urlParams.get('host');
-
-    if (host && /^https?:\/\//.test(host)) {
-      apiEndpoint = host.replace(/\/$/, '');
-    } else if ((host || window.location.hostname).includes('localhost')) {
-      apiEndpoint = 'http://localhost:8080';
-    } else {
-      apiEndpoint = 'https://spotcommandapp.com/api';
-    }
-  } catch (e) {
-    // Silently fail if window.location isn't available
-    console.warn('Could not initialize from window.location:', e);
+// Resolves the API endpoint from an explicit `host` param if provided, otherwise
+// falls back to a localhost dev server or the production API.
+function resolveApiEndpoint(host: string | null, hostname: string): string {
+  if (host && /^https?:\/\//.test(host)) {
+    return host.replace(/\/$/, '');
   }
+  if ((host || hostname).includes('localhost')) {
+    return 'http://localhost:8080';
+  }
+  return 'https://spotcommandapp.com/api';
+}
+
+// Populates urlParams/studentId/apiEndpoint from the current URL, if not already set.
+function initFromUrlParams() {
+  if (typeof window === 'undefined' || typeof window.location === 'undefined') {
+    return;
+  }
+  if (!urlParams) {
+    urlParams = new URLSearchParams(window.location.search);
+  }
+  if (!studentId) {
+    studentId = urlParams.get('student_id');
+  }
+  if (!apiEndpoint) {
+    apiEndpoint = resolveApiEndpoint(urlParams.get('host'), window.location.hostname);
+  }
+}
+
+// Initialize immediately if we're in a browser environment
+try {
+  initFromUrlParams();
+} catch (e) {
+  // Silently fail if window.location isn't available
+  console.warn('Could not initialize from window.location:', e);
 }
 
 const dynamicClassMenu = (self: teachableMachine) => ({
@@ -105,27 +119,8 @@ export default class teachableMachine extends extension({
   async init(env: Environment) {
     this.env = env;
     
-    // Ensure URL params and student ID are initialized in case they weren't set at module load
-    if (typeof window !== 'undefined' && typeof window.location !== 'undefined') {
-      if (!urlParams) {
-        urlParams = new URLSearchParams(window.location.search);
-      }
-      if (!studentId) {
-        studentId = urlParams.get('student_id');
-      }
-
-      // Set API endpoint if not already set
-      if (!apiEndpoint) {
-        const host = urlParams.get('host');
-        if (host && /^https?:\/\//.test(host)) {
-          apiEndpoint = host.replace(/\/$/, '');
-        } else if ((host || window.location.hostname).includes('localhost')) {
-          apiEndpoint = 'http://localhost:8080';
-        } else {
-          apiEndpoint = 'https://spotcommandapp.com/api';
-        }
-      }
-    }
+    // Ensure URL params, student ID, and API endpoint are initialized in case they weren't set at module load
+    initFromUrlParams();
 
     /**
      * The last millisecond epoch timestamp that the video stream was
@@ -133,7 +128,6 @@ export default class teachableMachine extends extension({
      * @type {number}
      */
     this.lastUpdate = null;
-
 
     // What is the confidence of the latest prediction
     this.maxConfidence = null;
@@ -351,7 +345,6 @@ export default class teachableMachine extends extension({
   getModels() {
     // If models are still loading, show a loading menu
     if (this.modelsListPromise && (!this.modelsList || this.modelsList.length === 0)) {
-       this.modelsListPromise;
        // When the promise resolves, force a UI update
        this.modelsListPromise.then(() => {
          if (window && window.vm) {
@@ -614,25 +607,8 @@ function inlineImagesInSvg(svg) {
     return;
   }
 
-  // Re-initialize API endpoint and student ID in browser environment (in case they changed)
-  if (!urlParams) {
-    urlParams = new URLSearchParams(window.location.search);
-  }
-  if (!studentId) {
-    studentId = urlParams.get('student_id');
-  }
-
-  // Detect if running on localhost (in case apiEndpoint wasn't set)
-  if (!apiEndpoint) {
-    const host = urlParams.get('host');
-    if (host && /^https?:\/\//.test(host)) {
-      apiEndpoint = host.replace(/\/$/, '');
-    } else if ((host || window.location.hostname).includes('localhost')) {
-      apiEndpoint = 'http://localhost:8080';
-    } else {
-      apiEndpoint = 'https://spotcommandapp.com/api';
-    }
-  }
+  // Re-initialize URL params, student ID, and API endpoint in case they changed
+  initFromUrlParams();
   
   window['submitTravelLog'] = async (description = "codinatorimage", status = "complete") => {
     const svgElement = document.querySelector("svg.blocklySvg");
@@ -684,11 +660,8 @@ function inlineImagesInSvg(svg) {
       return;
     }
 
-    let lastProjectId;
-    let lastProjectJSON;
-
     // Fetch the last project from the API endpoint
-    fetch(`${apiEndpoint}/codinator-projects?student_id=${studentId}`, {
+    return fetch(`${apiEndpoint}/codinator-projects?student_id=${studentId}`, {
       method: 'GET',
       headers: {
         'Content-Type': 'application/json',
@@ -697,7 +670,7 @@ function inlineImagesInSvg(svg) {
     })
     .then(response => {
       if (!response.ok) {
-        console.error("Failed to load last project");
+        console.error(`Failed to load last project: ${response.status} ${response.statusText}`);
         return;
       }
       return response.json();
@@ -707,13 +680,12 @@ function inlineImagesInSvg(svg) {
         console.error("No project found");
         return;
       }
-      
-      // Get ID and  json field from the project
-      lastProjectId = data[data.length - 1].id;
-      lastProjectJSON = data[data.length - 1].json;
 
       // Load the project into the editor
-      window.vm.loadProject(lastProjectJSON);
+      window.vm.loadProject(data[data.length - 1].json);
+    })
+    .catch(err => {
+      console.error("Error loading last project:", err);
     });
   };
 
@@ -730,7 +702,7 @@ function inlineImagesInSvg(svg) {
     const arrayBuffer = await code.arrayBuffer();
     const uint8Array = new Uint8Array(arrayBuffer);
     
-    fetch(`${apiEndpoint}/codinator-projects`, {
+    const response = await fetch(`${apiEndpoint}/codinator-projects`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -742,7 +714,11 @@ function inlineImagesInSvg(svg) {
         sb3: Array.from(uint8Array),
         json: window.vm.toJSON(),
       })
-    })
+    });
+
+    if (!response.ok) {
+      throw new Error(`Failed to save project: ${response.status} ${response.statusText}`);
+    }
   }
 
   window.addEventListener('message', async (event) => {
