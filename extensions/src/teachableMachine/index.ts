@@ -35,10 +35,12 @@ if (typeof window !== 'undefined' && typeof window.location !== 'undefined') {
     urlParams = new URLSearchParams(window.location.search);
     studentId = urlParams.get('student_id');
 
-    // Detect if running on localhost
-    const host = urlParams.get('host') || window.location.hostname;
+    // Use explicit host param if provided, otherwise detect if running on localhost
+    const host = urlParams.get('host');
 
-    if (host.includes('localhost')) {
+    if (host && /^https?:\/\//.test(host)) {
+      apiEndpoint = host.replace(/\/$/, '');
+    } else if ((host || window.location.hostname).includes('localhost')) {
       apiEndpoint = 'http://localhost:8080';
     } else {
       apiEndpoint = 'https://spotcommandapp.com/api';
@@ -114,8 +116,10 @@ export default class teachableMachine extends extension({
 
       // Set API endpoint if not already set
       if (!apiEndpoint) {
-        const host = urlParams.get('host') || window.location.hostname;
-        if (host.includes('localhost')) {
+        const host = urlParams.get('host');
+        if (host && /^https?:\/\//.test(host)) {
+          apiEndpoint = host.replace(/\/$/, '');
+        } else if ((host || window.location.hostname).includes('localhost')) {
           apiEndpoint = 'http://localhost:8080';
         } else {
           apiEndpoint = 'https://spotcommandapp.com/api';
@@ -620,8 +624,10 @@ function inlineImagesInSvg(svg) {
 
   // Detect if running on localhost (in case apiEndpoint wasn't set)
   if (!apiEndpoint) {
-    const host = urlParams.get('host') || window.location.hostname;
-    if (host.includes('localhost')) {
+    const host = urlParams.get('host');
+    if (host && /^https?:\/\//.test(host)) {
+      apiEndpoint = host.replace(/\/$/, '');
+    } else if ((host || window.location.hostname).includes('localhost')) {
       apiEndpoint = 'http://localhost:8080';
     } else {
       apiEndpoint = 'https://spotcommandapp.com/api';
